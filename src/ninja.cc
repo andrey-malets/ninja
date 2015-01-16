@@ -384,10 +384,8 @@ int NinjaMain::ToolQueryCmd(int argc, char* argv[]) {
   for (int i = 0; i < argc; ++i) {
     string err;
     Node* node = CollectTarget(argv[i], &err);
-    if (!node) {
-      Error("%s", err.c_str());
-      return 1;
-    }
+    if (!node)
+      continue;
 
     for (vector<Edge*>::const_iterator edge = node->out_edges().begin();
          edge != node->out_edges().end(); ++edge)

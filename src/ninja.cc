@@ -392,6 +392,11 @@ int NinjaMain::ToolRunCmd(int argc, char* argv[]) {
 
     for (vector<Edge*>::const_iterator edge = node->out_edges().begin();
          edge != node->out_edges().end(); ++edge) {
+      for (vector<Node*>::iterator o = (*edge)->outputs_.begin();
+           o != (*edge)->outputs_.end(); ++o)
+        if (!disk_interface_.MakeDirs((*o)->path()))
+          return 1;
+
       const string rspfile = (*edge)->GetUnescapedRspfile();
       if (!rspfile.empty()) {
         string content = (*edge)->GetBinding("rspfile_content");

@@ -107,7 +107,7 @@ struct NinjaMain : public BuildLogUser {
   // The various subcommands, run via "-t XXX".
   int ToolGraph(int argc, char* argv[]);
   int ToolQuery(int argc, char* argv[]);
-  int ToolQueryCmd(int argc, char* argv[]);
+  int ToolRunCmd(int argc, char* argv[]);
   int ToolDeps(int argc, char* argv[]);
   int ToolBrowse(int argc, char* argv[]);
   int ToolMSVC(int argc, char* argv[]);
@@ -375,11 +375,14 @@ int NinjaMain::ToolQuery(int argc, char* argv[]) {
   return 0;
 }
 
-int NinjaMain::ToolQueryCmd(int argc, char* argv[]) {
+int NinjaMain::ToolRunCmd(int argc, char* argv[]) {
   if (argc == 0) {
-    Error("expected a target to query");
+    Error("expected a target(s) to query");
     return 1;
   }
+
+  auto_ptr<CommandRunner> runner(GetCommandRunner(config_));
+  BuildStatus status(config_);
 
   for (int i = 0; i < argc; ++i) {
     string err;
@@ -388,9 +391,24 @@ int NinjaMain::ToolQueryCmd(int argc, char* argv[]) {
       continue;
 
     for (vector<Edge*>::const_iterator edge = node->out_edges().begin();
-         edge != node->out_edges().end(); ++edge)
-      puts((*edge)->EvaluateCommand().c_str());
+         edge != node->out_edges().end(); ++edge) {
+      if (!runner->StartCommand(*edge))
+        return 1;
+      status.BuildEdgeStarted(*edge);
+    }
   }
+
+  std::vector<Edge*> active_edges = runner->GetActiveEdges();
+  for (std::vector<Edge*>::const_iterator edge = active_edges.begin();
+       edge != active_edges.end(); ++edge) {
+    CommandRunner::Result result;
+    if (!runner->WaitForCommand(&result))
+      return 1;
+    int start_time, end_time;
+    status.BuildEdgeFinished(*edge, result.success(), result.output,
+                             &start_time, &end_time);
+  }
+
   return 0;
 }
 
@@ -748,8 +766,8 @@ const Tool* ChooseTool(const string& tool_name) {
       Tool::RUN_AFTER_LOAD, &NinjaMain::ToolGraph },
     { "query", "show inputs/outputs for a path",
       Tool::RUN_AFTER_LOGS, &NinjaMain::ToolQuery },
-    { "querycmd", "list commands to build all outputs of given targets",
-      Tool::RUN_AFTER_LOGS, &NinjaMain::ToolQueryCmd },
+    { "runcmd", "run commands to build all outputs of given targets",
+      Tool::RUN_AFTER_LOGS, &NinjaMain::ToolRunCmd },
     { "targets",  "list targets by their rule or depth in the DAG",
       Tool::RUN_AFTER_LOAD, &NinjaMain::ToolTargets },
     { "compdb",  "dump JSON compilation database to stdout",

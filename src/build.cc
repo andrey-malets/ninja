@@ -541,6 +541,13 @@ bool RealCommandRunner::WaitForCommand(Result* result) {
   return true;
 }
 
+CommandRunner* GetCommandRunner(const BuildConfig& config) {
+  if (config.dry_run)
+    return new DryRunCommandRunner;
+  else
+    return new RealCommandRunner(config);
+}
+
 Builder::Builder(State* state, const BuildConfig& config,
                  BuildLog* build_log, DepsLog* deps_log,
                  DiskInterface* disk_interface)
@@ -620,12 +627,8 @@ bool Builder::Build(string* err) {
   int failures_allowed = config_.failures_allowed;
 
   // Set up the command runner if we haven't done so already.
-  if (!command_runner_.get()) {
-    if (config_.dry_run)
-      command_runner_.reset(new DryRunCommandRunner);
-    else
-      command_runner_.reset(new RealCommandRunner(config_));
-  }
+  if (!command_runner_.get())
+    command_runner_.reset(GetCommandRunner(config_));
 
   // This main loop runs the entire build process.
   // It is structured like this:

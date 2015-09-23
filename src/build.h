@@ -136,6 +136,8 @@ struct BuildConfig {
   double max_load_average;
 };
 
+CommandRunner* GetCommandRunner(const BuildConfig& config);
+
 /// Builder wraps the build process: starting commands, updating status.
 struct Builder {
   Builder(State* state, const BuildConfig& config,

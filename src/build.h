@@ -125,7 +125,8 @@ struct BuildConfig {
   enum Verbosity {
     NORMAL,
     QUIET,  // No output -- used when testing.
-    VERBOSE
+    VERBOSE,
+    RAW
   };
   Verbosity verbosity;
   bool dry_run;

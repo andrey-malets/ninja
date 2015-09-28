@@ -206,6 +206,7 @@ void Usage(const BuildConfig& config) {
 "  -l N     do not start new jobs if the load average is greater than N\n"
 "  -n       dry run (don't run commands but act like they succeeded)\n"
 "  -v       show all command lines while building\n"
+"  -r       enable raw build output\n"
 "\n"
 "  -d MODE  enable debugging (use -d list to list modes)\n"
 "  -t TOOL  run a subtool (use -t list to list subtools)\n"
@@ -1005,7 +1006,8 @@ int NinjaMain::RunBuild(int argc, char** argv) {
   }
 
   if (!builder.Build(&err)) {
-    printf("ninja: build stopped: %s.\n", err.c_str());
+    if (config_.verbosity != BuildConfig::RAW)
+      printf("ninja: build stopped: %s.\n", err.c_str());
     if (err.find("interrupted by user") != string::npos) {
       return 2;
     }
@@ -1053,7 +1055,7 @@ int ReadFlags(int* argc, char*** argv,
 
   int opt;
   while (!options->tool &&
-         (opt = getopt_long(*argc, *argv, "d:f:j:k:l:nt:vw:C:h", kLongOptions,
+         (opt = getopt_long(*argc, *argv, "d:f:j:k:l:nt:vrw:C:h", kLongOptions,
                             NULL)) != -1) {
     switch (opt) {
       case 'd':
@@ -1101,6 +1103,9 @@ int ReadFlags(int* argc, char*** argv,
         break;
       case 'v':
         config->verbosity = BuildConfig::VERBOSE;
+        break;
+      case 'r':
+        config->verbosity = BuildConfig::RAW;
         break;
       case 'w':
         if (!WarningEnable(optarg, options))

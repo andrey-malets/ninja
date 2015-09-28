@@ -125,7 +125,8 @@ void BuildStatus::BuildEdgeFinished(Edge* edge,
     PrintStatus(edge);
 
   // Print the command that is spewing before printing its output.
-  if (!success)
+  // Do not print command if using raw output.
+  if (!success && config_.verbosity != BuildConfig::RAW)
     printer_.PrintOnNewLine("FAILED: " + edge->EvaluateCommand() + "\n");
 
   if (!output.empty()) {
@@ -239,7 +240,8 @@ string BuildStatus::FormatProgressStatus(
 }
 
 void BuildStatus::PrintStatus(Edge* edge) {
-  if (config_.verbosity == BuildConfig::QUIET)
+  if (config_.verbosity == BuildConfig::QUIET ||
+      config_.verbosity == BuildConfig::RAW)
     return;
 
   bool force_full_command = config_.verbosity == BuildConfig::VERBOSE;

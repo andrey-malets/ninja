@@ -422,6 +422,8 @@ int NinjaMain::ToolRunCmd(int argc, char* argv[]) {
                              &start_time, &end_time);
   }
 
+  status.BuildFinished();
+
   return 0;
 }
 
